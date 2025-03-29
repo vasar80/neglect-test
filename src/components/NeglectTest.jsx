@@ -59,4 +59,127 @@ const NeglectTest = () => {
     });
   };
 
-  const calculateResul
+    const calculateResults = () => {
+    let totalH = 0;
+    let foundH = 0;
+    let leftH = 0;
+    let rightH = 0;
+    let foundLeftH = 0;
+    let foundRightH = 0;
+
+    lines.forEach((line, lineIndex) => {
+      line.forEach((letter, position) => {
+        if (letter.letter === 'H') {
+          totalH++;
+          if (position < 25) { // Lato sinistro
+            leftH++;
+            if (markedPositions.has(`${lineIndex}-${position}`)) {
+              foundLeftH++;
+            }
+          } else { // Lato destro
+            rightH++;
+            if (markedPositions.has(`${lineIndex}-${position}`)) {
+              foundRightH++;
+            }
+          }
+          if (markedPositions.has(`${lineIndex}-${position}`)) {
+            foundH++;
+          }
+        }
+      });
+    });
+
+    const percentage = (foundH / totalH) * 100;
+    const leftPercentage = (foundLeftH / leftH) * 100;
+    const rightPercentage = (foundRightH / rightH) * 100;
+    const difference = Math.abs(leftPercentage - rightPercentage);
+
+    let neglectLevel = '';
+    if (difference === 0) {
+      neglectLevel = 'Nessun neglect evidenziabile';
+    } else if (difference <= 2) {
+      neglectLevel = 'Neglect molto lieve';
+    } else if (difference <= 4) {
+      neglectLevel = 'Neglect lieve';
+    } else if (difference <= 6) {
+      neglectLevel = 'Neglect moderato';
+    } else if (difference <= 8) {
+      neglectLevel = 'Neglect grave';
+    } else {
+      neglectLevel = 'Neglect gravissimo';
+    }
+
+    return {
+      totalH,
+      foundH,
+      percentage,
+      leftH,
+      rightH,
+      foundLeftH,
+      foundRightH,
+      leftPercentage,
+      rightPercentage,
+      difference,
+      neglectLevel
+    };
+  };
+
+  const handleComplete = () => {
+    const results = calculateResults();
+    setResults(results);
+    setIsTestComplete(true);
+  };
+
+  const renderLine = (line, lineIndex) => (
+    <div key={lineIndex} className="line">
+      {line.map((letter, position) => {
+        const key = `${lineIndex}-${position}`;
+        const isMarked = markedPositions.has(key);
+        const isUnmarkedH = letter.letter === 'H' && !isMarked && isTestComplete;
+        
+        return (
+          <span
+            key={key}
+            className={`letter ${isMarked ? 'marked' : ''} ${isUnmarkedH ? 'unmarked' : ''}`}
+            onClick={() => !isTestComplete && handleLetterClick(lineIndex, position)}
+          >
+            {letter.letter}
+          </span>
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <div className="test-container">
+      <h2>Test di Neglect</h2>
+      <div className="lines-container">
+        {lines.map((line, lineIndex) => renderLine(line, lineIndex))}
+      </div>
+      {!isTestComplete && (
+        <button onClick={handleComplete} className="complete-button">
+          Completa il Test
+        </button>
+      )}
+      {isTestComplete && (
+        <div className="results">
+          <h3>Risultati del Test</h3>
+          <p>H Totali: {results.totalH}</p>
+          <p>H Identificate: {results.foundH}</p>
+          <p>Percentuale di Identificazione: {results.percentage.toFixed(1)}%</p>
+          <p>Lato Sinistro: {results.foundLeftH}/{results.leftH} ({results.leftPercentage.toFixed(1)}%)</p>
+          <p>Lato Destro: {results.foundRightH}/{results.rightH} ({results.rightPercentage.toFixed(1)}%)</p>
+          <p>Differenza tra i Lati: {results.difference.toFixed(1)}%</p>
+          <p className="neglect-level">Livello di Neglect: {results.neglectLevel}</p>
+          <p className="legend">
+            <span className="legend-item"><span className="legend-color marked"></span> H identificate</span>
+            <span className="legend-item"><span className="legend-color unmarked"></span> H non identificate</span>
+          </p>
+          <button onClick={() => window.location.reload()}>Ripeti il Test</button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default NeglectTest;
