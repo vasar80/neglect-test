@@ -9,7 +9,7 @@
 .logo {
   position: fixed;
   top: 20px;
-  left: 20px;
+  right: 20px; /* Cambiato da left a right per spostare il logo a destra */
   max-width: 150px;
   height: auto;
   z-index: 1000;
