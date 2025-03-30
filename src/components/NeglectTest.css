@@ -4,13 +4,14 @@
   padding: 20px;
   text-align: center;
   position: relative;
+  margin-top: 60px;  /* Aggiunto spazio sopra per il logo */
 }
 
 .logo {
   position: absolute;
-  top: 10px;  /* Ridotto da 20px a 10px */
+  top: -50px;  /* Spostato sopra il contenitore */
   left: 20px;
-  max-width: 150px;  /* Ridotto da 300px a 150px */
+  max-width: 150px;
   height: auto;
   z-index: 1000;
   display: block;
