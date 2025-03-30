@@ -1,157 +1,260 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import './NeglectTest.css';
 import logoImage from '../assets/logo.png';
 
 const NeglectTest = () => {
-  const [markedPositions, setMarkedPositions] = useState([]);
+  const [lines, setLines] = useState([]);
+  const [markedLetters, setMarkedLetters] = useState({});
+  const [testStarted, setTestStarted] = useState(false);
   const [testCompleted, setTestCompleted] = useState(false);
   const [results, setResults] = useState(null);
+  const [startTime, setStartTime] = useState(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const resultsRef = useRef(null);
+  const logoImage = '/logo.png';
 
   // Genera le linee una sola volta all'inizio
-  const lines = useMemo(() => {
+  useEffect(() => {
     const generatedLines = [];
+    
+    // Creiamo una matrice 10x40 piena di 'M'
     for (let i = 0; i < 10; i++) {
-      const line = [];
-      for (let j = 0; j < 40; j++) {
-        line.push(Math.random() < 0.5 ? 'H' : 'M');
-      }
+      const line = new Array(40).fill('M');
       generatedLines.push(line);
     }
-    return generatedLines;
-  }, []); // Array vuoto significa che viene generato solo una volta
+
+    // Definiamo i quadranti (5 righe x 4 colonne)
+    const quadrants = [];
+    for (let row = 0; row < 5; row++) {
+      for (let col = 0; col < 4; col++) {
+        quadrants.push({ row, col });
+      }
+    }
+    
+    // Mescoliamo i quadranti
+    for (let i = quadrants.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [quadrants[i], quadrants[j]] = [quadrants[j], quadrants[i]];
+    }
+    
+    // Selezioniamo 10 quadranti per il lato sinistro e 10 per il destro
+    const leftQuadrants = quadrants.filter(q => q.col < 2).slice(0, 10);
+    const rightQuadrants = quadrants.filter(q => q.col >= 2).slice(0, 10);
+    
+    // Per ogni quadrante, posizioniamo una H in una posizione casuale all'interno del quadrante
+    [...leftQuadrants, ...rightQuadrants].forEach(({ row, col }) => {
+      // Calcoliamo i limiti del quadrante
+      const startRow = row * 2; // Ogni quadrante occupa 2 righe
+      const startCol = col * 10; // Ogni quadrante occupa 10 colonne
+      
+      // Generiamo una posizione casuale all'interno del quadrante
+      const randomRow = startRow + Math.floor(Math.random() * 2);
+      const randomCol = startCol + Math.floor(Math.random() * 10);
+      
+      generatedLines[randomRow][randomCol] = 'H';
+    });
+    
+    setLines(generatedLines);
+  }, []);
+
+  // Aggiorna il timer ogni secondo
+  useEffect(() => {
+    let interval;
+    if (testStarted && !testCompleted) {
+      interval = setInterval(() => {
+        setCurrentTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [testStarted, testCompleted]);
+
+  const handleStartTest = () => {
+    setTestStarted(true);
+    setStartTime(Date.now());
+  };
 
   const handleLetterClick = (lineIndex, letterIndex) => {
-    setMarkedPositions(prev => [...prev, `${lineIndex}-${letterIndex}`]);
+    if (!testStarted) return;
+    setMarkedLetters(prev => ({
+      ...prev,
+      [lineIndex]: {
+        ...prev[lineIndex],
+        [letterIndex]: !prev[lineIndex]?.[letterIndex]
+      }
+    }));
   };
 
   const handleComplete = () => {
-    setTestCompleted(true);
-    calculateResults();
-  };
-
-  const calculateResults = () => {
-    let totalH = 0;
-    let markedH = 0;
+    const endTime = Date.now();
+    const timeElapsed = Math.floor((endTime - startTime) / 1000);
+    
     let markedHLeft = 0;
     let markedHRight = 0;
-
-    // Conta le H totali e quelle marcate
+    
+    // Calcola le H marcate per lato
     lines.forEach((line, lineIndex) => {
       line.forEach((letter, letterIndex) => {
-        if (letter === 'H') {
-          totalH++;
-          if (markedPositions.includes(`${lineIndex}-${letterIndex}`)) {
-            markedH++;
-            // Determina se è a sinistra o destra
-            if (letterIndex < 20) {
-              markedHLeft++;
-            } else {
-              markedHRight++;
-            }
+        if (letter === 'H' && markedLetters[lineIndex]?.[letterIndex]) {
+          if (letterIndex < 20) {
+            markedHLeft++;
+          } else {
+            markedHRight++;
           }
         }
       });
     });
 
-    const difference = Math.abs(markedHRight - markedHLeft);
-    let neglectLevel = '';
+    const markedPercentageLeft = (markedHLeft / 10) * 100;
+    const markedPercentageRight = (markedHRight / 10) * 100;
+    const difference = Math.abs(markedPercentageLeft - markedPercentageRight);
     
-    if (difference === 0) {
-      neglectLevel = 'Neglect non evidenziabile';
-    } else if (difference <= 2) {
-      neglectLevel = 'Neglect lieve';
-    } else if (difference <= 4) {
-      neglectLevel = 'Neglect moderato';
-    } else if (difference <= 6) {
-      neglectLevel = 'Neglect significativo';
-    } else if (difference <= 8) {
-      neglectLevel = 'Neglect severo';
+    let neglectLevel = '';
+    let diagnosis = '';
+    let diagnosisClass = '';
+
+    if (difference < 10) {
+      neglectLevel = 'Nessun Neglect';
+      diagnosis = 'Non si evidenzia neglect spaziale unilaterale. La performance è bilanciata tra i due emicampi.';
+      diagnosisClass = 'no-neglect';
+    } else if (difference < 20) {
+      neglectLevel = 'Neglect Lieve';
+      diagnosis = `Si evidenzia un neglect spaziale unilaterale di grado lieve ${markedPercentageLeft < markedPercentageRight ? 'a sinistra' : 'a destra'}. La differenza tra i due emicampi è moderata.`;
+      diagnosisClass = 'mild-neglect';
+    } else if (difference < 30) {
+      neglectLevel = 'Neglect Moderato';
+      diagnosis = `Si evidenzia un neglect spaziale unilaterale di grado moderato ${markedPercentageLeft < markedPercentageRight ? 'a sinistra' : 'a destra'}. La differenza tra i due emicampi è significativa.`;
+      diagnosisClass = 'moderate-neglect';
     } else {
-      neglectLevel = 'Neglect grave';
+      neglectLevel = 'Neglect Grave';
+      diagnosis = `Si evidenzia un neglect spaziale unilaterale di grado grave ${markedPercentageLeft < markedPercentageRight ? 'a sinistra' : 'a destra'}. La differenza tra i due emicampi è molto significativa.`;
+      diagnosisClass = 'severe-neglect';
     }
 
     setResults({
-      totalH,
-      markedH,
       markedHLeft,
       markedHRight,
-      difference,
-      markedPercentage: (markedH / totalH) * 100,
-      neglectLevel
+      markedPercentageLeft,
+      markedPercentageRight,
+      difference: `${difference.toFixed(1)}%`,
+      neglectLevel,
+      diagnosis,
+      diagnosisClass,
+      timeElapsed
     });
+    
+    setTestCompleted(true);
+    
+    // Scroll verso i risultati dopo un breve delay per assicurarsi che siano stati renderizzati
+    setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
-  const renderTest = () => {
+  const handleRestart = () => {
+    setTestStarted(false);
+    setTestCompleted(false);
+    setResults(null);
+    setMarkedLetters({});
+    setCurrentTime(0);
+  };
+
+  const formatTime = (timeInSeconds) => {
+    const hours = Math.floor(timeInSeconds / 3600);
+    const minutes = Math.floor((timeInSeconds % 3600) / 60);
+    const seconds = timeInSeconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const renderTest = () => (
+    <div className="test-container">
+      <img 
+        src={logoImage} 
+        alt="Logo" 
+        className="logo"
+      />
+      {!testStarted && (
+        <div className="start-banner">
+          <p>Marca tutte le lettere H che vedi</p>
+          <button className="start-button" onClick={handleStartTest}>
+            Inizia Test
+          </button>
+        </div>
+      )}
+      {testStarted && (
+        <div className="timer">
+          Tempo: {formatTime(currentTime)}
+        </div>
+      )}
+      <div className="lines-container">
+        {lines.map((line, lineIndex) => (
+          <div key={lineIndex} className="line">
+            {line.map((letter, letterIndex) => (
+              <div
+                key={letterIndex}
+                className={`letter ${markedLetters[lineIndex]?.[letterIndex] ? 'marked' : ''} ${testCompleted && letter === 'H' && !markedLetters[lineIndex]?.[letterIndex] ? 'unmarked' : ''} ${!testStarted ? 'disabled' : ''}`}
+                onClick={() => handleLetterClick(lineIndex, letterIndex)}
+              >
+                {letter}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      {testStarted && (
+        <button className="complete-button" onClick={handleComplete}>
+          Completa Test
+        </button>
+      )}
+    </div>
+  );
+
+  const renderResults = () => {
+    if (!results) return null;
+    
     return (
-      <div className="test-container">
+      <div className="results-container" ref={resultsRef}>
         <img 
           src={logoImage} 
           alt="Logo" 
           className="logo"
         />
-        <div className="lines-container">
-          {lines.map((line, lineIndex) => (
-            <div key={lineIndex} className="line">
-              {line.map((letter, letterIndex) => (
-                <span
-                  key={letterIndex}
-                  className={`letter ${
-                    markedPositions.includes(`${lineIndex}-${letterIndex}`)
-                      ? 'marked'
-                      : testCompleted && letter === 'H' && !markedPositions.includes(`${lineIndex}-${letterIndex}`)
-                      ? 'unmarked'
-                      : ''
-                  }`}
-                  onClick={() => handleLetterClick(lineIndex, letterIndex)}
-                >
-                  {letter}
-                </span>
-              ))}
-            </div>
-          ))}
+        <h2>Risultati del Test</h2>
+        <div className="results-grid">
+          <div className="result-item">
+            <h3>Lato Sinistro</h3>
+            <p>H marcate: {results.markedHLeft}/10</p>
+            <p>Percentuale: {results.markedPercentageLeft.toFixed(1)}%</p>
+          </div>
+          <div className="result-item">
+            <h3>Lato Destro</h3>
+            <p>H marcate: {results.markedHRight}/10</p>
+            <p>Percentuale: {results.markedPercentageRight.toFixed(1)}%</p>
+          </div>
+          <div className="result-item">
+            <h3>Differenza</h3>
+            <p>{results.difference}</p>
+          </div>
+          <div className="result-item">
+            <h3>Tempo Impiegato</h3>
+            <p>{formatTime(results.timeElapsed)}</p>
+          </div>
         </div>
-        <button className="complete-button" onClick={handleComplete}>
-          Completa Test
+        <div className={`diagnosis ${results.diagnosisClass}`}>
+          <h3>Diagnosi</h3>
+          <p>{results.diagnosis}</p>
+        </div>
+        <button className="complete-button" onClick={handleRestart}>
+          Ripeti Test
         </button>
       </div>
     );
   };
 
-  const renderResults = () => {
-    if (!results) return null;
-
-    return (
-      <div className="results">
-        <h2>Risultati del Test</h2>
-        <p>Lettere H totali: {results.totalH}</p>
-        <p>Lettere H evidenziate: {results.markedH}</p>
-        <p>Lettere H non evidenziate: {results.totalH - results.markedH}</p>
-        <p>Percentuale di lettere H evidenziate: {results.markedPercentage.toFixed(1)}%</p>
-        <p>Differenza tra H evidenziate a destra e sinistra: {results.difference}</p>
-        <div className="neglect-level">
-          <h3>Livello di Negligenza Spaziale:</h3>
-          <p>{results.neglectLevel}</p>
-        </div>
-        <div className="legend">
-          <div className="legend-item">
-            <span className="legend-color marked"></span>
-            <span>H Evidenziate</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-color unmarked"></span>
-            <span>H Non Evidenziate</span>
-          </div>
-        </div>
-        <button onClick={() => window.location.reload()}>Ripeti Test</button>
-      </div>
-    );
-  };
-
   return (
-    <>
+    <div className="neglect-test">
       {renderTest()}
       {testCompleted && renderResults()}
-    </>
+    </div>
   );
 };
 
