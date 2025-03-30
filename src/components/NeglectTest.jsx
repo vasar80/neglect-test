@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './NeglectTest.css';
-import logoImage from '../logo.png';  // Cambiato il nome da 'logo' a 'logoImage'
+import logoImage from '../assets/logo.png';  // Aggiornato il percorso per puntare alla cartella assets
 
 const NeglectTest = () => {
   const [markedPositions, setMarkedPositions] = useState([]);
