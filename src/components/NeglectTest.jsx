@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import './NeglectTest.css';
 import logoImage from '../assets/logo.png';
 
@@ -6,19 +6,19 @@ const NeglectTest = () => {
   const [markedPositions, setMarkedPositions] = useState([]);
   const [testCompleted, setTestCompleted] = useState(false);
   const [results, setResults] = useState(null);
-  const lines = generateLines(); // Spostato fuori dal render per evitare il rimescolamento
 
-  const generateLines = () => {
-    const lines = [];
+  // Genera le linee una sola volta all'inizio
+  const lines = useMemo(() => {
+    const generatedLines = [];
     for (let i = 0; i < 10; i++) {
       const line = [];
       for (let j = 0; j < 40; j++) {
         line.push(Math.random() < 0.5 ? 'H' : 'M');
       }
-      lines.push(line);
+      generatedLines.push(line);
     }
-    return lines;
-  };
+    return generatedLines;
+  }, []); // Array vuoto significa che viene generato solo una volta
 
   const handleLetterClick = (lineIndex, letterIndex) => {
     setMarkedPositions(prev => [...prev, `${lineIndex}-${letterIndex}`]);
@@ -30,46 +30,54 @@ const NeglectTest = () => {
   };
 
   const calculateResults = () => {
-    const totalLetters = 400; // 10 lines * 40 letters
-    const totalHLetters = lines.flat().filter(letter => letter === 'H').length;
-    const markedHLetters = markedPositions.filter(pos => {
-      const [lineIndex, letterIndex] = pos.split('-').map(Number);
-      return lines[lineIndex][letterIndex] === 'H';
-    }).length;
-    const unmarkedHLetters = totalHLetters - markedHLetters;
+    let totalH = 0;
+    let markedH = 0;
+    let markedHLeft = 0;
+    let markedHRight = 0;
 
-    const markedRight = markedPositions.filter(pos => {
-      const [lineIndex, letterIndex] = pos.split('-').map(Number);
-      return letterIndex >= 20 && lines[lineIndex][letterIndex] === 'H';
-    }).length;
+    // Conta le H totali e quelle marcate
+    lines.forEach((line, lineIndex) => {
+      line.forEach((letter, letterIndex) => {
+        if (letter === 'H') {
+          totalH++;
+          if (markedPositions.includes(`${lineIndex}-${letterIndex}`)) {
+            markedH++;
+            // Determina se è a sinistra o destra
+            if (letterIndex < 20) {
+              markedHLeft++;
+            } else {
+              markedHRight++;
+            }
+          }
+        }
+      });
+    });
 
-    const markedLeft = markedPositions.filter(pos => {
-      const [lineIndex, letterIndex] = pos.split('-').map(Number);
-      return letterIndex < 20 && lines[lineIndex][letterIndex] === 'H';
-    }).length;
-
-    const differenceRightLeft = Math.abs(markedRight - markedLeft);
-
+    const difference = Math.abs(markedHRight - markedHLeft);
     let neglectLevel = '';
-    if (differenceRightLeft === 10) {
-      neglectLevel = 'Neglect Grave';
-    } else if (differenceRightLeft === 0) {
+    
+    if (difference === 0) {
       neglectLevel = 'Neglect non evidenziabile';
-    } else if (differenceRightLeft <= 3) {
-      neglectLevel = 'Neglect Lieve';
-    } else if (differenceRightLeft <= 7) {
-      neglectLevel = 'Neglect Moderato';
+    } else if (difference <= 2) {
+      neglectLevel = 'Neglect lieve';
+    } else if (difference <= 4) {
+      neglectLevel = 'Neglect moderato';
+    } else if (difference <= 6) {
+      neglectLevel = 'Neglect significativo';
+    } else if (difference <= 8) {
+      neglectLevel = 'Neglect severo';
     } else {
-      neglectLevel = 'Neglect Significativo';
+      neglectLevel = 'Neglect grave';
     }
 
     setResults({
-      markedHLetters,
-      unmarkedHLetters,
-      markedRight,
-      markedLeft,
-      neglectLevel,
-      differenceRightLeft,
+      totalH,
+      markedH,
+      markedHLeft,
+      markedHRight,
+      difference,
+      markedPercentage: (markedH / totalH) * 100,
+      neglectLevel
     });
   };
 
@@ -81,7 +89,6 @@ const NeglectTest = () => {
           alt="Logo" 
           className="logo"
         />
-        <h1>Test per Neglect: Cancellazione di lettere H</h1>
         <div className="lines-container">
           {lines.map((line, lineIndex) => (
             <div key={lineIndex} className="line">
@@ -91,6 +98,8 @@ const NeglectTest = () => {
                   className={`letter ${
                     markedPositions.includes(`${lineIndex}-${letterIndex}`)
                       ? 'marked'
+                      : testCompleted && letter === 'H' && !markedPositions.includes(`${lineIndex}-${letterIndex}`)
+                      ? 'unmarked'
                       : ''
                   }`}
                   onClick={() => handleLetterClick(lineIndex, letterIndex)}
@@ -112,50 +121,38 @@ const NeglectTest = () => {
     if (!results) return null;
 
     return (
-      <div className="test-container">
-        <img 
-          src={logoImage} 
-          alt="Logo" 
-          className="logo"
-        />
-        <h1>Test per Neglect: Cancellazione di lettere H</h1>
-        <div className="lines-container">
-          {lines.map((line, lineIndex) => (
-            <div key={lineIndex} className="line">
-              {line.map((letter, letterIndex) => (
-                <span
-                  key={letterIndex}
-                  className={`letter ${
-                    markedPositions.includes(`${lineIndex}-${letterIndex}`)
-                      ? 'marked'
-                      : !markedPositions.includes(`${lineIndex}-${letterIndex}`) && letter === 'H'
-                      ? 'unmarked'
-                      : ''
-                  }`}
-                >
-                  {letter}
-                </span>
-              ))}
-            </div>
-          ))}
+      <div className="results">
+        <h2>Risultati del Test</h2>
+        <p>Lettere H totali: {results.totalH}</p>
+        <p>Lettere H evidenziate: {results.markedH}</p>
+        <p>Lettere H non evidenziate: {results.totalH - results.markedH}</p>
+        <p>Percentuale di lettere H evidenziate: {results.markedPercentage.toFixed(1)}%</p>
+        <p>Differenza tra H evidenziate a destra e sinistra: {results.difference}</p>
+        <div className="neglect-level">
+          <h3>Livello di Negligenza Spaziale:</h3>
+          <p>{results.neglectLevel}</p>
         </div>
-        <div className="results">
-          <h2>Risultati del Test</h2>
-          <p>Lettere H evidenziate: {results.markedHLetters}</p>
-          <p>Lettere H non evidenziate: {results.unmarkedHLetters}</p>
-          <p>Lettere H evidenziate a destra: {results.markedRight}</p>
-          <p>Lettere H evidenziate a sinistra: {results.markedLeft}</p>
-          <div className="neglect-level">
-            <h3>Livello di Neglect:</h3>
-            <p>{results.neglectLevel}</p>
+        <div className="legend">
+          <div className="legend-item">
+            <span className="legend-color marked"></span>
+            <span>H Evidenziate</span>
           </div>
-          <button onClick={() => window.location.reload()}>Ripeti Test</button>
+          <div className="legend-item">
+            <span className="legend-color unmarked"></span>
+            <span>H Non Evidenziate</span>
+          </div>
         </div>
+        <button onClick={() => window.location.reload()}>Ripeti Test</button>
       </div>
     );
   };
 
-  return testCompleted ? renderResults() : renderTest();
+  return (
+    <>
+      {renderTest()}
+      {testCompleted && renderResults()}
+    </>
+  );
 };
 
 export default NeglectTest;
