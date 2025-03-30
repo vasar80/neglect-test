@@ -153,7 +153,7 @@ const NeglectTest = () => {
   return (
     <div className="test-container">
       <img 
-        src="/str-logo-full-color-rgb-900px-w-72ppi" 
+        src="/str-logo.png" 
         alt="Logo" 
         className="logo"
         style={{ maxWidth: '300px' }}
