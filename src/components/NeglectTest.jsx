@@ -153,10 +153,9 @@ const NeglectTest = () => {
   return (
     <div className="test-container">
       <img 
-        src={window.location.origin + '/logo.png'} 
+        src="/logo.png" 
         alt="Logo" 
         className="logo"
-        style={{ maxWidth: '300px' }}
       />
       <h2>Test di Neglect</h2>
       <div className="lines-container">
