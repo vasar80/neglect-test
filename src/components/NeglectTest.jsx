@@ -60,7 +60,7 @@ const NeglectTest = () => {
     return (
       <div className="test-container">
         <img 
-          src={process.env.PUBLIC_URL + '/logo.png'} 
+          src="/images/logo.png" 
           alt="Logo" 
           className="logo"
         />
@@ -96,7 +96,7 @@ const NeglectTest = () => {
     return (
       <div className="test-container">
         <img 
-          src={process.env.PUBLIC_URL + '/logo.png'} 
+          src="/images/logo.png" 
           alt="Logo" 
           className="logo"
         />
