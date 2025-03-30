@@ -6,6 +6,7 @@ const NeglectTest = () => {
   const [markedPositions, setMarkedPositions] = useState([]);
   const [testCompleted, setTestCompleted] = useState(false);
   const [results, setResults] = useState(null);
+  const lines = generateLines(); // Spostato fuori dal render per evitare il rimescolamento
 
   const generateLines = () => {
     const lines = [];
@@ -30,34 +31,49 @@ const NeglectTest = () => {
 
   const calculateResults = () => {
     const totalLetters = 400; // 10 lines * 40 letters
-    const markedCount = markedPositions.length;
-    const unmarkedCount = totalLetters - markedCount;
-    const markedPercentage = (markedCount / totalLetters) * 100;
-    const unmarkedPercentage = (unmarkedCount / totalLetters) * 100;
+    const totalHLetters = lines.flat().filter(letter => letter === 'H').length;
+    const markedHLetters = markedPositions.filter(pos => {
+      const [lineIndex, letterIndex] = pos.split('-').map(Number);
+      return lines[lineIndex][letterIndex] === 'H';
+    }).length;
+    const unmarkedHLetters = totalHLetters - markedHLetters;
+
+    const markedRight = markedPositions.filter(pos => {
+      const [lineIndex, letterIndex] = pos.split('-').map(Number);
+      return letterIndex >= 20 && lines[lineIndex][letterIndex] === 'H';
+    }).length;
+
+    const markedLeft = markedPositions.filter(pos => {
+      const [lineIndex, letterIndex] = pos.split('-').map(Number);
+      return letterIndex < 20 && lines[lineIndex][letterIndex] === 'H';
+    }).length;
+
+    const differenceRightLeft = Math.abs(markedRight - markedLeft);
 
     let neglectLevel = '';
-    if (unmarkedPercentage > 50) {
-      neglectLevel = 'Negligenza spaziale significativa';
-    } else if (unmarkedPercentage > 30) {
-      neglectLevel = 'Negligenza spaziale moderata';
-    } else if (unmarkedPercentage > 15) {
-      neglectLevel = 'Negligenza spaziale lieve';
+    if (differenceRightLeft === 10) {
+      neglectLevel = 'Neglect Grave';
+    } else if (differenceRightLeft === 0) {
+      neglectLevel = 'Neglect non evidenziabile';
+    } else if (differenceRightLeft <= 3) {
+      neglectLevel = 'Neglect Lieve';
+    } else if (differenceRightLeft <= 7) {
+      neglectLevel = 'Neglect Moderato';
     } else {
-      neglectLevel = 'Nessuna negligenza spaziale significativa';
+      neglectLevel = 'Neglect Significativo';
     }
 
     setResults({
-      markedCount,
-      unmarkedCount,
-      markedPercentage,
-      unmarkedPercentage,
-      neglectLevel
+      markedHLetters,
+      unmarkedHLetters,
+      markedRight,
+      markedLeft,
+      neglectLevel,
+      differenceRightLeft,
     });
   };
 
   const renderTest = () => {
-    const lines = generateLines();
-
     return (
       <div className="test-container">
         <img 
@@ -65,6 +81,7 @@ const NeglectTest = () => {
           alt="Logo" 
           className="logo"
         />
+        <h1>Test per Neglect: Cancellazione di lettere H</h1>
         <div className="lines-container">
           {lines.map((line, lineIndex) => (
             <div key={lineIndex} className="line">
@@ -101,25 +118,36 @@ const NeglectTest = () => {
           alt="Logo" 
           className="logo"
         />
+        <h1>Test per Neglect: Cancellazione di lettere H</h1>
+        <div className="lines-container">
+          {lines.map((line, lineIndex) => (
+            <div key={lineIndex} className="line">
+              {line.map((letter, letterIndex) => (
+                <span
+                  key={letterIndex}
+                  className={`letter ${
+                    markedPositions.includes(`${lineIndex}-${letterIndex}`)
+                      ? 'marked'
+                      : !markedPositions.includes(`${lineIndex}-${letterIndex}`) && letter === 'H'
+                      ? 'unmarked'
+                      : ''
+                  }`}
+                >
+                  {letter}
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
         <div className="results">
           <h2>Risultati del Test</h2>
-          <p>Lettere evidenziate: {results.markedCount}</p>
-          <p>Lettere non evidenziate: {results.unmarkedCount}</p>
-          <p>Percentuale di lettere evidenziate: {results.markedPercentage.toFixed(1)}%</p>
-          <p>Percentuale di lettere non evidenziate: {results.unmarkedPercentage.toFixed(1)}%</p>
+          <p>Lettere H evidenziate: {results.markedHLetters}</p>
+          <p>Lettere H non evidenziate: {results.unmarkedHLetters}</p>
+          <p>Lettere H evidenziate a destra: {results.markedRight}</p>
+          <p>Lettere H evidenziate a sinistra: {results.markedLeft}</p>
           <div className="neglect-level">
-            <h3>Livello di Negligenza Spaziale:</h3>
+            <h3>Livello di Neglect:</h3>
             <p>{results.neglectLevel}</p>
-          </div>
-          <div className="legend">
-            <div className="legend-item">
-              <span className="legend-color marked"></span>
-              <span>Evidenziate</span>
-            </div>
-            <div className="legend-item">
-              <span className="legend-color unmarked"></span>
-              <span>Non Evidenziate</span>
-            </div>
           </div>
           <button onClick={() => window.location.reload()}>Ripeti Test</button>
         </div>
