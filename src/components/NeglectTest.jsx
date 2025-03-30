@@ -153,9 +153,10 @@ const NeglectTest = () => {
   return (
     <div className="test-container">
       <img 
-        src={process.env.PUBLIC_URL + '/str-logo-full-color-rgb-900px-w-72ppi'} 
+        src="/str-logo-full-color-rgb-900px-w-72ppi" 
         alt="Logo" 
         className="logo"
+        style={{ maxWidth: '300px' }}
       />
       <h2>Test di Neglect</h2>
       <div className="lines-container">
