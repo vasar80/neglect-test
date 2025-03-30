@@ -1,19 +1,15 @@
-<!DOCTYPE html>
-<html lang="it">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Test di Neglect per Emiplegia"
-    />
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <title>Test di Neglect</title>
-  </head>
-  <body>
-    <noscript>Devi abilitare JavaScript per eseguire questa applicazione.</noscript>
-    <div id="root"></div>
-  </body>
-</html>
+{
+  "short_name": "Test Neglect",
+  "name": "Test di Neglect per Emiplegia",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
