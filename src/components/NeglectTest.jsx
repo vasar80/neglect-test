@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import './NeglectTest.css';
-import logoImage from '../assets/logo.png';  // Aggiornato il percorso per puntare alla cartella assets
 
 const NeglectTest = () => {
   const [markedPositions, setMarkedPositions] = useState([]);
@@ -29,7 +28,7 @@ const NeglectTest = () => {
   };
 
   const calculateResults = () => {
-    const totalLetters = 400; // 10 lines * 40 letters
+    const totalLetters = 400; // 10 linee * 40 lettere
     const markedCount = markedPositions.length;
     const unmarkedCount = totalLetters - markedCount;
     const markedPercentage = (markedCount / totalLetters) * 100;
@@ -60,8 +59,9 @@ const NeglectTest = () => {
 
     return (
       <div className="test-container">
+        {/* Utilizza il logo dalla cartella public */}
         <img 
-          src={logoImage} 
+          src={process.env.PUBLIC_URL + '/logo.png'} 
           alt="Logo" 
           className="logo"
         />
@@ -97,7 +97,7 @@ const NeglectTest = () => {
     return (
       <div className="test-container">
         <img 
-          src={logoImage} 
+          src={process.env.PUBLIC_URL + '/logo.png'} 
           alt="Logo" 
           className="logo"
         />
