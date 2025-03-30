@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './NeglectTest.css';
+import logo from '../assets/str-logo-full-color-rgb-900px-w-72ppi';
 
 const NeglectTest = () => {
   const [markedPositions, setMarkedPositions] = useState(new Set());
@@ -153,7 +154,7 @@ const NeglectTest = () => {
   return (
     <div className="test-container">
       <img 
-        src="/str-logo-full-color-rgb-900px-w-72ppi" 
+        src={logo} 
         alt="Logo" 
         className="logo"
       />
