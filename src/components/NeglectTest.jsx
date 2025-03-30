@@ -59,7 +59,7 @@ const NeglectTest = () => {
     });
   };
 
-    const calculateResults = () => {
+  const calculateResults = () => {
     let totalH = 0;
     let foundH = 0;
     let leftH = 0;
@@ -152,6 +152,11 @@ const NeglectTest = () => {
 
   return (
     <div className="test-container">
+      <img 
+        src="/str-logo-full-color-rgb-900px-w-72ppi" 
+        alt="Logo" 
+        className="logo"
+      />
       <h2>Test di Neglect</h2>
       <div className="lines-container">
         {lines.map((line, lineIndex) => renderLine(line, lineIndex))}
