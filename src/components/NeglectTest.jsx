@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import './NeglectTest.css';
-import logo from '../logo.png';  // Aggiungiamo questa riga per importare il logo
 
 const NeglectTest = () => {
   const [markedPositions, setMarkedPositions] = useState(new Set());
@@ -154,7 +153,7 @@ const NeglectTest = () => {
   return (
     <div className="test-container">
       <img 
-        src={logo} 
+        src={window.location.origin + '/logo.png'} 
         alt="Logo" 
         className="logo"
         style={{ maxWidth: '300px' }}
